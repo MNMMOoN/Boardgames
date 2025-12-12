@@ -1,9 +1,5 @@
-from .morghi_morgh import Morgh
-from .morghi_khoros import Khoros
-from .morghi_robah import Robah
-from .morghi_mar import Mar
-from .morghi_loune import Loune
-from .morghi_tale import Tale
+from .morghi_card import Card
+
 
 # NUM CONSTANTS
 NUM_OF_PLAYERS: int = 4
@@ -18,9 +14,26 @@ NUM_OF_LOUNES: int = 11
 NUM_OF_TOKHMS: int = 60
 
 # AVAILABLE CARDS IN THE GAME
-AVAILABLE_CARDS=[Morgh, Khoros, Robah, Mar, Loune, Tale]
-AVAILABLE_NUM_CARDS=[NUM_OF_MORGHS, NUM_OF_KHOROSES, NUM_OF_ROBAHS, NUM_OF_MARS, NUM_OF_LOUNES, NUM_OF_TALES]
-TOTAL_NUM_CARDS=sum(AVAILABLE_NUM_CARDS)
+AVAILABLE_ANIMAL_CARDS={
+    "Morgh": NUM_OF_MORGHS, 
+    "Khoros": NUM_OF_KHOROSES, 
+    "Robah": NUM_OF_ROBAHS, 
+    "Mar": NUM_OF_MARS
+    }
+
+AVAILABLE_NONANIMAL_CARDS={
+    "Loune": NUM_OF_LOUNES, 
+    "Tale": NUM_OF_TALES
+    }
+
+#AVAILABLE_CARDS = {**AVAILABLE_ANIMAL_CARDS, **AVAILABLE_NONANIMAL_CARDS}
+
+AVAILABLE_CARDS = {
+    "animal": AVAILABLE_ANIMAL_CARDS,
+    "nonanimal": AVAILABLE_NONANIMAL_CARDS
+}
+
+TOTAL_NUM_CARDS=sum(AVAILABLE_CARDS.values())
 
 # Rules 
 CARDS_FOR_TOKHM_BEZAR = {"Morgh": 1, "Khoros": 1, "Loune": 1}
