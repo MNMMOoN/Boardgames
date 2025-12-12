@@ -1,0 +1,65 @@
+{% extends "layout.html" %}
+{% set page = "game" %}
+{% block content %}
+<section class="max-w-6xl mx-auto px-4 py-6 space-y-4">
+  <div class="grid lg:grid-cols-3 gap-4">
+    <div class="lg:col-span-2 rounded-2xl bg-slate-900/70 border border-slate-800 p-5 space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p class="text-xs uppercase tracking-wide text-slate-400">Morghi</p>
+          <h1 class="text-2xl font-bold text-amber-300">Game Board</h1>
+        </div>
+        <div class="flex items-center gap-2 text-sm">
+          <div class="px-3 py-2 rounded-xl bg-slate-800 border border-slate-700">
+            Eggs: <span id="score-eggs" class="font-semibold text-amber-300">0</span>
+          </div>
+          <div class="px-3 py-2 rounded-xl bg-slate-800 border border-slate-700">
+            Chickens: <span id="score-chickens" class="font-semibold text-emerald-300">0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-4 space-y-3">
+        <p class="text-sm font-semibold text-slate-100">Your hand</p>
+        <div id="hand-cards" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="card-slot">?</div>
+          <div class="card-slot">?</div>
+          <div class="card-slot">?</div>
+          <div class="card-slot">?</div>
+        </div>
+        <p class="text-xs text-slate-400">Hands stay hidden; only you see these cards.</p>
+      </div>
+
+      <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <p class="text-sm font-semibold text-slate-100">Available actions</p>
+          <span class="text-xs text-slate-400">Server validates rules</span>
+        </div>
+        <div class="grid sm:grid-cols-2 gap-3 text-sm" id="action-buttons">
+          <button data-action="lay-egg" class="action-btn">Lay an Egg</button>
+          <button data-action="hatch-egg" class="action-btn">Hatch an Egg</button>
+          <button data-action="steal-egg" class="action-btn">Steal an Egg (Fox)</button>
+          <button data-action="break-egg" class="action-btn">Break Eggs (Snake)</button>
+          <button data-action="trap" class="action-btn">Set Trap</button>
+          <button data-action="replace-card" class="action-btn col-span-full sm:col-span-2">Replace a Card</button>
+        </div>
+        <p class="text-xs text-slate-400">
+          Actions send a request to the server; results return via SSE as chat updates and hand/score changes.
+        </p>
+      </div>
+    </div>
+
+    <div class="rounded-2xl bg-slate-900/70 border border-slate-800 flex flex-col">
+      <div class="border-b border-slate-800 px-4 py-3 flex items-center justify-between">
+        <p class="text-sm font-semibold text-slate-100">Live chat</p>
+        <span class="text-xs text-slate-400">All players</span>
+      </div>
+      <div id="chat-log" class="flex-1 overflow-y-auto p-4 space-y-3 text-sm"></div>
+      <form id="chat-form" class="p-4 border-t border-slate-800 flex gap-2">
+        <input name="message" autocomplete="off" placeholder="Send a move..." class="flex-1 rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm" />
+        <button class="px-4 py-2 rounded-xl bg-amber-400 text-slate-950 font-semibold hover:bg-amber-300 text-sm" type="submit">Send</button>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

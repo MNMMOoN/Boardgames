@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Morghi</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="{{ url_for('main_css') }}">
+</head>
+<body class="h-full flex flex-col" data-page="{{ page|default('') }}">
+  <header class="bg-slate-900/80 backdrop-blur border-b border-slate-800">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center font-black text-slate-950">M</div>
+        <div>
+          <p class="text-sm text-slate-300">Morghi</p>
+          <p class="text-xs text-slate-400">Feathers, Foxes &amp; Traps</p>
+        </div>
+      </div>
+      <div class="text-right text-xs text-slate-400">
+        <p id="current-player" class="font-medium text-slate-200"></p>
+        <p class="opacity-80" id="sse-status">SSE: disconnected</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="border-t border-slate-800 bg-slate-900/60 text-center text-xs text-slate-500 py-4">
+    Mock front-end for Morghi. Gameplay logic coming soon.
+  </footer>
+
+  <script src="{{ url_for('main_js') }}"></script>
+</body>
+</html>
