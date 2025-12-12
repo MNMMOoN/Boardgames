@@ -1,7 +1,6 @@
 from .morghi_player import Player
 from .morghi_deck import DeckOfCards
-from rules import *
-from .constants import *
+from .constants import AVAILABLE_CARDS
 class Game:
     def __init__(self, player_numbers):
         self.players = []
@@ -29,8 +28,3 @@ class Game:
         """
         for player in self.players:
             player.complete_hand(self.deck, indices=None)
-
-    def play(self):
-        # Example of how to use the rules
-        tokhm_bedozed(self.player1, self.player2, 1, self.deck)
-        tokhm_beshkan(self.player1, self.player2, 1, self.deck)
