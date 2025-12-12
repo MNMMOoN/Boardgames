@@ -13,6 +13,8 @@ __pycache__/
 *.class
 .env
 .venv
+.python-version
+pyproject.toml
 env/
 venv/
 ENV/

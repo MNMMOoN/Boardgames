@@ -1,16 +1,14 @@
-Implement a three-file mobile-first front-end using tailwind for a boardgame with the following pages:
-- /login : Home-page where the player enters their name, and it displays available games, or an option to create a new game.
-- /game  : The main page of the game, where the players play once the game starts. The game itself will be explained in details below.
-- /lobby : The lobby page where players set their ready status and wait until the game starts.
+Implement an mobile-first SPA front-end using tailwind for a boardgame with the following pages (i.e. SPA App States):
+- login       : Home-page where the player enters their name, and it displays available games, or an option to create a new game.
+- game_select : The page after login, where the player can either create a new game or join an existing one.
+- lobby       : The lobby page where players set their ready status and wait until the game starts.
+- game        : The main page of the game, where the players play once the game starts. The game itself will be explained in details below.
 Both `/game` and `/lobby` share a live-chat, and all game events are published to each player through an SSE (Server-Sent Event) channel.
 You're gonna write the following files:
 - `morghi/flask_app.py`          : A mock Flask app (encapsulate in a class) with the required end-points to serve the gui without errors, the actual functionality will be added later.
-- `morghi/templates/layout.html` : The app's jinja layout, served from python's `flask`
-- `morghi/templates/login.html`  : The login page
-- `morghi/templates/lobby.html`  : The lobby page
-- `morghi/templates/game.html`   : The game page
-- `morghi/static/main.css`    : The styles used for all pages
-- `morghi/static/main.js`     : The scripts used by all pages
+- `morghi/static/main.html` : The app's main html
+- `morghi/static/main.css`  : The styles used for all pages
+- `morghi/static/main.js`   : The scripts used by all pages
 
 The game page's flow is as follows:
 - There are 6 types of cards available for the Hand and the Deck: Hen, Rooster, Fox, Snake, Nest, Trap. Card images and icons will be available as static resources.
@@ -27,18 +25,16 @@ The game page's flow is as follows:
 
 Given the game rules described above ->
 - These are the suggested end-points for player actions.
-  - GET  `/`                : Redirects to `login.html` or `lobby.html` or `game.html` depending on session state.
-  - GET  `/login.html`      : Returns the `login.html` file.
-  - GET  `/lobby.html`      : Returns the `lobby.html` file.
-  - GET  `/game.html`       : Returns the `game.html` file.
-  - GET  `/main.css`        : It returns the `main.css` file you'll write now. Use it for styling.
-  - GET  `/main.js`         : It returns the `main.js` file you'll write now. Use it for scripting.
-  - POST `/login`           : Sign-in the player with their selected name. No authentication is required yet, just the player name. A token will be returned that should be used for further authentication.
+  - GET  `/`                : Serves `main.html`
+  - GET  `/main.css`        : Serves `main.css`
+  - GET  `/main.js`         : Serves `main.js`
+  - POST `/login`           : Sign-in the player with their selected name. No authentication is required yet, just the player name. Logout is handled on client-side only, by removing the authentication token.
   - GET  `/games`           : Used to list the games avaialble in the lobby, and whether they have available space to join.
   - POST `/games`           : Used to create a new game in lobby.
   - GET  `/game/{id}`       : Get the game info to display in the lobby, including its latest state.
+  - ???? `/game/{id}/listen`: The endpoint to listen to a game's events. Each player's events are pushed separately (depending on their authentication token). The first returned object is the full game state. Use the correct http method used in SSE instead of ????.
   - POST `/game/{id}/ready` : Send a boolean to indicate whether the player is ready to join the game with game Id = `id`.
-- After entering `lobby`, an SSE channel is opened. Once it's opened, the latest game state is received. Afterwards, the following events will be transmitted through the SSE channel. Most are only sent on `game`, the first two as described:
+- After selecting a game (entering `lobby`), an SSE channel is opened. Once it's opened, the latest game state is received. Afterwards, the following events will be transmitted through the SSE channel. Most are only sent on `game`, the first two as described:
   - SSE `game_started`: Only on `lobby`, Received once all players are `Ready` to join the game, and game `status` is updated to `Playing` and `game` page should be displayed now.
   - SSE `message`: On both `lobby` and `game`, Received a message to update the chat. It includes player-sent or system messages. Define the data structure as you see fit.
   - SSE `hand_changed`: Received once the player's hand is changed. All cards in the hand are re-sent to player.

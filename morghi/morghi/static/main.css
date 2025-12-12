@@ -1,65 +1,192 @@
 :root {
   color-scheme: dark;
-  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
 }
 
-body {
-  background: radial-gradient(circle at 20% 20%, rgba(251,191,36,0.06), transparent 30%),
-              radial-gradient(circle at 80% 0%, rgba(16,185,129,0.06), transparent 25%),
-              #0f172a;
-}
-
-.card-slot {
-  border-radius: 0.75rem;
-  border: 1px solid #334155;
-  background: rgba(30, 41, 59, 0.7);
-  text-align: center;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #e2e8f0;
-  padding: 1.5rem 0.75rem;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
-}
-
-.action-btn {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border-radius: 0.75rem;
-  border: 1px solid #334155;
-  background: #1f2937;
-  color: #f8fafc;
-  text-align: left;
-  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
-}
-
-.action-btn:hover {
-  border-color: #fbbf24;
-  background: rgba(31, 41, 55, 0.85);
-  transform: translateY(-1px);
-}
-
-.chat-message {
-  border-radius: 0.75rem;
-  border: 1px solid #1f2937;
+.card {
+  border-radius: 1rem;
   background: rgba(15, 23, 42, 0.7);
-  padding: 0.5rem 0.75rem;
-  color: #f8fafc;
-  font-size: 0.875rem;
+  padding: 1rem;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.45);
+  border: 1px solid rgba(30, 41, 59, 0.6);
 }
 
-.chat-message.system {
-  color: #fde68a;
-  border-color: rgba(252, 211, 77, 0.3);
+.view-card {
+  border-radius: 1.5rem;
+  background: rgba(2, 6, 23, 0.7);
+  padding: 0.5rem;
+  border: 1px solid rgba(15, 23, 42, 0.8);
+}
+
+.input {
+  margin-top: 0.25rem;
+  width: 100%;
+  border-radius: 0.9rem;
+  border: 1px solid #1e293b;
+  background: #0f172a;
+  padding: 0.55rem 0.8rem;
+  color: #e2e8f0;
+  font-size: 0.95rem;
+  transition: border-color 0.15s ease;
+}
+
+.input::placeholder {
+  color: #64748b;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #f59e0b;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.btn-primary {
+  background: #f59e0b;
+  color: #020617;
+  padding: 0.55rem 1rem;
+  box-shadow: 0 10px 25px rgba(245, 158, 11, 0.25);
+  border: 1px solid transparent;
+}
+
+.btn-primary:hover {
+  background: #fbbf24;
+}
+
+.btn-secondary {
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid #1f2937;
+}
+
+.btn-secondary:hover {
+  background: #1f2937;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: #e2e8f0;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid #1f2937;
+}
+
+.btn-ghost:hover {
+  background: rgba(30, 41, 59, 0.35);
 }
 
 .badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.5rem;
-  font-size: 11px;
+  gap: 0.35rem;
   border-radius: 999px;
-  border: 1px solid #334155;
-  background: #1f2937;
+  background: #0f172a;
+  padding: 0.35rem 0.9rem;
+}
+
+.chat-box {
+  margin-top: 0.5rem;
+  height: 16rem;
+  overflow-y: auto;
+  border-radius: 0.9rem;
+  background: rgba(2, 6, 23, 0.5);
+  padding: 0.75rem;
+  font-size: 0.9rem;
+  border: 1px solid rgba(15, 23, 42, 0.8);
+}
+
+.chat-line {
+  display: flex;
+  gap: 0.5rem;
+  border-radius: 0.6rem;
+  padding: 0.25rem 0.5rem;
+  color: #e2e8f0;
+}
+
+.chat-line.system {
+  color: #fcd34d;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.card-tile {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 7.5rem;
+  border-radius: 1rem;
+  border: 1px solid #1f2937;
+  background: linear-gradient(145deg, #0f172a, #020617);
+  padding: 0.75rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.card-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.card-icon {
+  font-size: 0.8rem;
+  letter-spacing: 0.2em;
+  color: #fcd34d;
+  text-transform: uppercase;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 0.9rem;
+  border: 1px solid #1f2937;
+  background: #0f172a;
+  padding: 0.55rem 0.8rem;
+  text-align: left;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #f8fafc;
+  transition: all 0.15s ease;
+}
+
+.action-btn:hover {
+  border-color: #f59e0b;
+  background: rgba(15, 23, 42, 0.9);
+}
+
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pill {
+  border-radius: 999px;
+  background: #0f172a;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: #e2e8f0;
 }
