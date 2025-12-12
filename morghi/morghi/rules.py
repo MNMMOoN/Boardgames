@@ -1,4 +1,6 @@
-from .constants import CARDS_FOR_TOKHM_BEZAR, CARDS_FOR_JOJOO_BEZAR
+from .constants import (CARDS_FOR_TOKHM_BEZAR, CARDS_FOR_JOJOO_BEZAR, 
+                        CARDS_FOR_TOKHM_BEDOZED, CARDS_FOR_DEFENDING_TOKHM_BEDOZED,
+                        CARDS_FOR_TOKHM_BESHKAN, CARDS_FOR_DEFENDING_TOKHM_BESHKAN)
 
 def tokhm_bezar(player, deck):
     """
@@ -51,4 +53,87 @@ def jojoo_bezar(player, deck):
             deck.num_not_in_deck_cards += 1
             if all(count == 0 for count in cards_to_remove.values()):
                 break
+
+def tokhm_bedozed(player1, player2, deck):
+    """
+    Steel one Tokhm from th eother players hand
+    """
+    player1_hand = [card.kind for card in player1.hand]
+    player2_hand = [card.kind for card in player2.hand]
+
+    for kind, count in CARDS_FOR_TOKHM_BEDOZED.items():
+        if player1_hand.count(kind) < count:
+            print(f"Player {player1.name} does not have enough {kind} cards to give for Tokhm Bedozed.")
+            return
+        
+        for _ in range(count):
+            player1.hand.remove(kind)
+            deck.not_in_deck_cards.append(kind)
+            deck.num_not_in_deck_cards += 1
+
+    can_defend = True
+    for kind, count in CARDS_FOR_DEFENDING_TOKHM_BEDOZED.items():
+        if player2_hand.count(kind) < count:
+            print(f"Player {player2.name} does not have enough {kind} cards to defend for Tokhm Bedozed.")
+            can_defend = False
     
+    if can_defend:
+        for kind, count in CARDS_FOR_DEFENDING_TOKHM_BEDOZED.items():
+            for _ in range(count):
+                player2.hand.remove(kind)
+                deck.not_in_deck_cards.append(kind)
+                deck.num_not_in_deck_cards += 1
+        print(f"Player {player2.name} defends against Tokhm Bedozed.")
+    
+    else: 
+        # Player 1 steals one Tokhm from player 2
+        if player2.num_of_tokhms > 0:
+            player2.num_of_tokhms -= 1
+            player1.num_of_tokhms += 1
+            print(f"Player {player1.name} steals one Tokhm from {player2.name}.")
+        else:
+            print(f"Player {player2.name} does not have any Tokhm to steal.")
+
+def tokhm_beshkan(player1, player2, n, deck):
+    """
+    Destroy one or two Tokhm from the other player's hand
+    """
+    player1_hand = [card.kind for card in player1.hand]
+    player2_hand = [card.kind for card in player2.hand]
+
+    if n != 2:
+        print("You can only destroy 2 Tokhm.")
+        return
+
+    for kind, count in CARDS_FOR_TOKHM_BESHKAN.items():
+        if player1_hand.count(kind) < count:
+            print(f"Player {player1.name} does not have enough {kind} cards to give for Tokhm Beshkan.")
+            return
+        
+        for _ in range(count):
+            player1.hand.remove(kind)
+            deck.not_in_deck_cards.append(kind)
+            deck.num_not_in_deck_cards += 1
+
+    can_defend = True
+    for kind, count in CARDS_FOR_DEFENDING_TOKHM_BESHKAN.items():
+        if player2_hand.count(kind) < count:
+            print(f"Player {player2.name} does not have enough {kind} cards to defend for Tokhm Beshkan.")
+            can_defend = False
+    
+    if can_defend:
+        for kind, count in CARDS_FOR_DEFENDING_TOKHM_BESHKAN.items():
+            for _ in range(count):
+                player2.hand.remove(kind)
+                deck.not_in_deck_cards.append(kind)
+                deck.num_not_in_deck_cards += 1
+        print(f"Player {player2.name} defends against Tokhm Beshkan.")
+    
+    else: 
+        # Player 1 destroys one or two Tokhm from player 2
+        if player2.num_of_tokhms > 0:
+            destroyed_tokhms = min(n, player2.num_of_tokhms)
+            player2.num_of_tokhms -= destroyed_tokhms
+            print(f"Player {player1.name} destroys {destroyed_tokhms} Tokhm from {player2.name}.")
+        else:
+            print(f"Player {player2.name} does not have any Tokhm to destroy.")
