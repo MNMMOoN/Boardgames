@@ -22,23 +22,65 @@ class Player:
         self.num_of_tokhms = 0
         self.num_of_jojos = 0
 
-    def give_cards(self, n, indices=None, to=None):
+    def complete_hand(self, deck, indices):
+        if self.num_cards_in_hand < self.min_cards_in_hand:
+            n = self.num_cards_in_hand - self.min_cards_in_hand
+            cards = deck.take_cards(n)
+            self.hand = self.hand + cards
+            self.num_cards_in_hand += n
+
+        if self.num_cards_in_hand > self.max_cards_in_hand:
+            n = self.max_cards_in_hand - self.num_cards_in_hand
+            if indices is None or len(indices) == 0:
+                indices = range(n)
+            for i in indices:
+                card = self.hand.pop(i)
+
+
+
+    def give_cards(self, n, indices=None):
+        cards = []
+
+        if n > self.num_cards_in_hand:
+            n = self.num_cards_in_hand
+        
+        if indices is None:
+            indices = range(n)
+
+        for i in indices:
+            card = self.hand.pop(i)
+            cards.append(card)
+            self.num_cards_in_hand -= 1
+        
+        if self.num_cards_in_hand < self.min_cards_in_hand:
+            self.complete_hand()
+
+    def take_cards(self, n, indices=None, to=None):
         """
         Give cards from the self.hand in specific indeces or randomly to other player or to deck
         """
-        for i in indices:
-            if i < 0 or i > self.num_cards_in_hand:
-                continue
+        
+    
+    def _take_card_from_deck(self, deck, n):
+        if n > self.max_cards_in_hand - self.num_cards_in_hand:
+            n = self.max_cards_in_hand - self.num_cards_in_hand
 
-            card = self.hand.pop(i)
-            self.num_cards_in_hand -= 1
-            if to:
-                to.add_cards(card)
-                to.num_cards_in_hand += 1
-            else:
-                # Assuming 'deck' is a global or passed-in object
-                deck.not_in_deck_cards.append(card)
-                deck.num_not_in_deck_cards += 1
+        cards = deck.take_cards(n)
+        self.hand = self.hand + cards
+        self.num_cards_in_hand += n
+        self.is_turn = False
+    
+    def _take_cards_from_player(self, player, n, indices):
+        if n > self.max_cards_in_hand - self.num_cards_in_hand:
+            n = self.max_cards_in_hand - self.num_cards_in_hand
+
+        cards = palyer.give_card(player, n, indices)
+        self.hand = self.hand + cards
+        self.num_cards_in_hand += n
+        self.is_turn = False
+
+
+
 
 
     def add_cards(self, source, n=None, mode="deck", indices=None, deck=None):
