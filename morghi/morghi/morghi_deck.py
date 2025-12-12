@@ -65,6 +65,10 @@ class DeckOfCards:
             self.num_not_in_deck_cards += 1
         return given
     
+    def put_cards(self, cards):
+        self.not_in_deck_cards = self.not_in_deck_cards + cards
+        self.num_not_in_deck_cards += len(cards)
+    
     def remove_cards(self, kind, n, mode="first"):
         """
         mode:
