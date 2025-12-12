@@ -1,0 +1,154 @@
+# General temporary files
+*~
+*.swp
+*.lock
+.DS_Store
+Thumbs.db
+
+# Python-related ignores
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.class
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+pip-log.txt
+pip-delete-this-directory.txt
+.vscode/
+.idea/
+.vagrant/
+*.code-workspace
+
+# LaTeX-related ignores
+## Core LaTeX auxiliary files
+*.aux
+*.lof
+*.log
+*.lot
+*.fls
+*.out
+*.toc
+*.fmt
+*.fot
+*.cb
+*.cb2
+.*.lb
+
+## Bibliography auxiliary files
+*.bbl
+*.bcf
+*.blg
+*-blx.aux
+*-blx.bib
+*.run.xml
+
+## Build tool auxiliary files
+*.fdb_latexmk
+*.synctex*
+*.pdfsync
+
+## Intermediate documents
+*.dvi
+*.xdv
+*-converted-to.*
+
+## Presentation auxiliary files (e.g., Beamer)
+*.nav
+*.snm
+*.vrb
+
+## Package-specific auxiliary files
+# algorithms
+*.alg
+*.loa
+# amsthm
+*.thm
+# glossaries
+*.acn
+*.acr
+*.glg
+*.glo
+*.gls
+# hyperref
+*.brf
+# index
+*.idx
+*.ilg
+*.ind
+# listings
+*.lol
+# minted
+_minted-*
+*.pyg
+# nomencl
+*.nlo
+*.nls
+# sagetex
+*.sagetex.sage
+*.sagetex.py
+*.sagetex.scmd
+# tcolorbox
+*.listing
+# TikZ
+*.dpth
+*.md5
+*.auxlock
+# other common packages
+acs-*.bib
+*-concordance.tex
+*-tikzDictionary
+svg-inkscape/
+pythontex-files-*/
+*.upa
+*.upb
+*.ptc
+*.tdo
+*.hst
+*.ver
+*.lod
+*.xcp
+*.xmpi
+*.xdy
+*.xyc
+*.xyd
+*.ttt
+*.fff
+
+## Custom patterns
+*.bbl-SAVE-ERROR
+
+# Note: .tex, .pdf, and .bib files are intentionally not ignored to be tracked.

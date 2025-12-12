@@ -1,0 +1,130 @@
+from .constants import MIN_NUM_OF_CARDS_IN_HAND, MAX_NUM_OF_CARDS_IN_HAND
+
+import random
+
+class Player:
+    def __init__(self, name):
+        self.name = name
+        self.hand = []  # List to hold the player's cards
+        self.num_cards_in_hand = 0  # Number of cards the player have
+        self.min_cards_in_hand = MIN_NUM_OF_CARDS_IN_HAND  # Minimum number of cards the player must have
+        self.max_cards_in_hand = MAX_NUM_OF_CARDS_IN_HAND  # Maximum number of cards the player can have
+
+        self.allcards = []  # List to hold all cards the player has been played
+
+        self.active = True  # Player is active in the game
+        self.is_turn = False  # Flag to indicate if it's the player's turn
+        self.has_played = False  # Flag to indicate if the player has played this turn
+        self.played_cards = []  # List to hold actions taken by the player
+        self.is_winner = False  # Flag to indicate if the player has won
+
+        self.achievements = []  # List to hold player's achievements
+        self.num_of_tokhms = 0
+        self.num_of_jojos = 0
+
+    def give_cards(self, n, indices=None, to=None):
+        """
+        Give cards from the self.hand in specific indeces or randomly to other player or to deck
+        """
+        for i in indices:
+            if i < 0 or i > self.num_cards_in_hand:
+                continue
+
+            card = self.hand.pop(i)
+            self.num_cards_in_hand -= 1
+            if to:
+                to.add_cards(card)
+                to.num_cards_in_hand += 1
+            else:
+                # Assuming 'deck' is a global or passed-in object
+                deck.not_in_deck_cards.append(card)
+                deck.num_not_in_deck_cards += 1
+
+
+    def add_cards(self, source, n=None, mode="deck", indices=None, deck=None):
+        """
+        Unified card drawing method.
+
+        Parameters:
+            source:
+                - deck object (when mode="deck")
+                - player object (when mode="player")
+            n (int or None):
+                - number of cards to draw
+            mode (str):
+                - "deck"     -> draw from a deck (top cards)
+                - "player"   -> draw from another player's hand (random by default)
+            indices (list or None):
+                - specific indices to draw (only works in mode="player")
+            deck:
+                - deck object (used to refill other player's hand if needed)
+        """
+
+        capacity = self.max_cards_in_hand - self.num_cards_in_hand
+        if capacity <= 0:
+            return []
+
+        if n is None:
+            n = capacity
+        else:
+            n = min(n, capacity)
+
+        drawn_cards = []
+
+        # ----- DRAW FROM DECK -----
+        if mode == "deck":
+            drawn_cards = source.give_cards(n)
+
+        # ----- DRAW FROM ANOTHER PLAYER -----
+        elif mode == "player":
+            other = source
+
+            if other.num_cards_in_hand == 0:
+                print(f"{other.name} has no cards to draw.")
+                return []
+
+            n = min(n, other.num_cards_in_hand)
+
+            # Specific index-based drawing
+            if indices is not None:
+                valid_indices = sorted(set(i for i in indices if 0 <= i < len(other.hand)))
+                valid_indices = valid_indices[:n]
+
+            # Random drawing if no indices
+            else:
+                valid_indices = random.sample(range(len(other.hand)), n)
+
+            # Remove safely from back to front
+            for i in sorted(valid_indices, reverse=True):
+                card = other.hand.pop(i)
+                other.num_cards_in_hand -= 1
+
+                # Auto-refill logic
+                if deck and other.num_cards_in_hand < other.min_cards_in_hand:
+                    other.draw_cards(deck, mode="deck",
+                                    n=other.min_cards_in_hand - other.num_cards_in_hand)
+
+                self.hand.append(card)
+                self.num_cards_in_hand += 1
+                drawn_cards.append(card)
+
+        else:
+            raise ValueError("mode must be 'deck' or 'player'")
+
+        # Update hand count
+        self.hand.extend(drawn_cards) if mode == "deck" else None
+        self.num_cards_in_hand = len(self.hand)
+
+        return drawn_cards
+
+    
+    def play_cards(self, card_indices):
+        """
+        Play cards from hand based on provided indices.
+
+        Parameters:
+            card_indices (list): List of indices of cards to play from hand.
+        """
+
+        played_cards = []
+
