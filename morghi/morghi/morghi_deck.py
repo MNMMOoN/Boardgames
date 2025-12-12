@@ -1,27 +1,21 @@
 from .constants import *
-from .morghi_morgh import Morgh
-from .morghi_khoros import Khoros
-from .morghi_robah import Robah
-from .morghi_mar import Mar
-from .morghi_loune import Loune
-from .morghi_tale import Tale
+from .morghi_card import Card
+
 
 import random
 
 class DeckOfCards:
     def __init__(self, 
-                 available_cards=AVAILABLE_CARDS, available_num_cards=AVAILABLE_NUM_CARDS, 
+                 available_cards=AVAILABLE_CARDS, 
                  shuffle=True):
         """
         Initialize the deck with available cards and their quantities.
         Parameters:
-            available_cards (list)      – list of card classes available in the game
-            available_num_cards (list)  – list of integers representing the number of each card class
+            available_cards (dict)      – list of card classes to include in the deck
             shuffle (bool)              – whether to shuffle the deck upon creation
         """
-        self.cards = self.create_deck(available_cards= available_cards, available_num_cards=available_num_cards)
-        self.available_card_types = available_cards.copy()
-        self.available_card_types_num = available_num_cards.copy()
+        self.cards = self.create_deck(available_cards= available_cards)
+        self.available_card = available_cards.copy()
 
         self.not_in_deck_cards = []
         self.num_not_in_deck_cards = 0
@@ -37,8 +31,12 @@ class DeckOfCards:
             self.shuffle_deck()
 
     def create_deck(self, available_cards, available_num_cards):
-        from itertools import chain, repeat
-        return list(chain.from_iterable(map(repeat, available_cards, available_num_cards)))
+        return [
+        Card(name=name, is_animal=(kind == "animal"))
+        for kind, cards in available_cards.items()
+        for name, count in cards.items()
+        for _ in range(count)
+        ]
 
     def shuffle_deck(self):
         random.shuffle(self.cards)
@@ -49,14 +47,15 @@ class DeckOfCards:
     def make_deck_complete(self):
         if self.shuffle:
             self._shuffle_played_cards(self)
-        self.cards = self.in_deck_cards + self.not_in_deck_cards
+        self.in_deck_cards = self.in_deck_cards + self.not_in_deck_cards
         self.not_in_deck_cards = []
-        self.in_deck_cards = self.cards.copy()
+        self.num_not_in_deck_cards = 0
+        self.num_in_deck_cards = len(self.in_deck_cards)
     
-    def give_cards(self, n):
+    def take_cards(self, n):
         given = []
         if self.num_in_deck_cards < n:
-                self.make_deck_complete()
+            self.make_deck_complete()
         for _ in range(n):
             card = self.cards.pop(0)
             given.append(card)
@@ -73,9 +72,14 @@ class DeckOfCards:
             - "last"   -> remove last n matching cards
             - "random" -> remove n random matching cards
         """
+        
+        if sum(1 for card in self.in_deck_cards if card.kind == kind) < n:
+            self.make_deck_complete()
+            if sum(1 for card in self.in_deck_cards if card.kind == kind) < n:
+                n = sum(1 for card in self.in_deck_cards if card.kind == kind)
 
         # Collect matching indices
-        indices = [i for i, card in enumerate(self.cards) if card.kind == kind]
+        indices = [i for i, card in enumerate(self.in_deck_cards) if card.kind == kind]
 
         if not indices:
             return []
@@ -97,7 +101,7 @@ class DeckOfCards:
 
         # Remove safely from back to front
         for i in sorted(remove_indices, reverse=True):
-            card = self.cards.pop(i)
+            card = self.in_deck_cards.pop(i)
             card.playable = False
             self.removed_cards.append(card)
             self.num_removed_cards += 1
@@ -136,10 +140,10 @@ class DeckOfCards:
             self.num_in_deck_cards += 1
             added.append(card)
 
-        if card_class in self.available_card_types:
-            index = self.available_card_types.index(card_class)
+        if card_class in self.available_card:
+            index = self.available_card.index(card_class)
             self.available_card_types_num[index] += n
         else:
-            self.available_card_types.append(card_class)
+            self.available_card.append(card_class)
             self.available_card_types_num.append(n)
         return added
