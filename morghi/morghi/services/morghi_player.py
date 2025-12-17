@@ -1,14 +1,19 @@
-from .constants import MIN_NUM_OF_CARDS_IN_HAND, MAX_NUM_OF_CARDS_IN_HAND
+from morghi.core import rules
 from .morghi_deck import DeckOfCards
-import random
+
 
 class Player:
-    def __init__(self, name):
+    def __init__(self, id: int, name: str):
+        self.id = id
         self.name = name
-        self.hand = []  # List to hold the player's cards
-        self.num_cards_in_hand = 0  # Number of cards the player have
-        self.min_cards_in_hand = MIN_NUM_OF_CARDS_IN_HAND  # Minimum number of cards the player must have
-        self.max_cards_in_hand = MAX_NUM_OF_CARDS_IN_HAND  # Maximum number of cards the player can have
+        # List to hold the player's cards
+        self.hand = []
+        # Number of cards the player have
+        self.num_cards_in_hand = 0
+        # Minimum number of cards the player must have
+        self.min_cards_in_hand = rules.MIN_NUM_OF_CARDS_IN_HAND
+        # Maximum number of cards the player can have
+        self.max_cards_in_hand = rules.MAX_NUM_OF_CARDS_IN_HAND
 
         self.allcards = []  # List to hold all cards the player has been played
 
@@ -38,13 +43,12 @@ class Player:
                 deck.put_cards([card])
                 self.num_cards_in_hand -= 1
 
-
-    def give_cards(self, n, indices=None):
+    def give_cards(self, n, deck, indices=None):
         cards = []
 
         if n > self.num_cards_in_hand:
             n = self.num_cards_in_hand
-        
+
         if indices is None:
             indices = range(n)
 
@@ -52,9 +56,9 @@ class Player:
             card = self.hand.pop(i)
             cards.append(card)
             self.num_cards_in_hand -= 1
-        
+
         if self.num_cards_in_hand < self.min_cards_in_hand:
-            self.complete_hand()
+            self.complete_hand(deck, indices)
 
     def take_cards(self, n, indices=None, from_=None):
         """
@@ -65,7 +69,6 @@ class Player:
         if isinstance(from_, Player):
             self._take_cards_from_player(from_, n, indices)
 
-    
     def _take_card_from_deck(self, deck, n):
         if n > abs(self.max_cards_in_hand - self.num_cards_in_hand):
             n = abs(self.max_cards_in_hand - self.num_cards_in_hand)
@@ -74,7 +77,7 @@ class Player:
         self.hand = self.hand + cards
         self.num_cards_in_hand += n
         self.is_turn = False
-    
+
     def _take_cards_from_player(self, player, n, indices):
         if n > self.max_cards_in_hand - self.num_cards_in_hand:
             n = self.max_cards_in_hand - self.num_cards_in_hand
@@ -83,8 +86,6 @@ class Player:
         self.hand = self.hand + cards
         self.num_cards_in_hand += n
         self.is_turn = False
-
-
 
     # def add_cards(self, source, n=None, mode="deck", indices=None, deck=None):
     #     """
@@ -161,4 +162,3 @@ class Player:
     #     self.num_cards_in_hand = len(self.hand)
 
     #     return drawn_cards
-

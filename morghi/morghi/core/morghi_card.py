@@ -7,7 +7,7 @@ class Card:
             max_plays (int)   – how many times this card can be used
         """
         self.name = name
-        self.is_animal = None
+        self.is_animal = is_animal
         self.max_plays = max_plays
         self.times_played = 0
         self._playable = True
@@ -16,7 +16,7 @@ class Card:
         """Check if the card can still be played."""
         if self.max_plays is None:
             return self._playable
-        
+
         if self.times_played > self.max_plays:
             self._playable = False
 

@@ -1,41 +1,32 @@
-from .constants import *
-from .morghi_card import Card
-
-
+from morghi.core import Card, rules
 import random
 
+
 class DeckOfCards:
-    def __init__(self, 
-                 available_cards=AVAILABLE_CARDS, 
-                 shuffle=True):
-        """
-        Initialize the deck with available cards and their quantities.
-        Parameters:
-            available_cards (dict)      – list of card classes to include in the deck
-            shuffle (bool)              – whether to shuffle the deck upon creation
-        """
-        self.cards = self.create_deck(available_cards= available_cards)
-        self.available_card = available_cards.copy()
+    def __init__(
+        self,
+        available_cards: dict[str, dict[str, int]] = rules.AVAILABLE_CARDS,
+        shuffle: bool = True,
+    ):
+        self.cards: list[Card] = self.create_deck(available_cards=available_cards)
+        self.available_card: dict[str, dict[str, int]] = available_cards.copy()
 
-        self.not_in_deck_cards = []
-        self.num_not_in_deck_cards = 0
+        self.not_in_deck_cards: list[Card] = []
 
-        self.in_deck_cards = self.cards.copy()
-        self.num_in_deck_cards = len(self.in_deck_cards)
+        self.in_deck_cards: list[Card] = self.cards.copy()
 
-        self.removed_cards = []
-        self.num_removed_cards = 0
+        self.removed_cards: list[Card] = []
 
-        self.shuffle = shuffle
+        self.shuffle: bool = shuffle
         if self.shuffle:
             self.shuffle_deck()
 
-    def create_deck(self, available_cards, available_num_cards):
+    def create_deck(self, available_cards: dict[str, dict[str, int]]):
         return [
-        Card(name=name, is_animal=(kind == "animal"))
-        for kind, cards in available_cards.items()
-        for name, count in cards.items()
-        for _ in range(count)
+            Card(name=name, is_animal=(kind == "animal"))
+            for kind, cards in available_cards.items()
+            for name, count in cards.items()
+            for _ in range(count)
         ]
 
     def shuffle_deck(self):
@@ -46,44 +37,39 @@ class DeckOfCards:
 
     def make_deck_complete(self):
         if self.shuffle:
-            self._shuffle_played_cards(self)
-        self.in_deck_cards = self.in_deck_cards + self.not_in_deck_cards
-        self.not_in_deck_cards = []
-        self.num_not_in_deck_cards = 0
-        self.num_in_deck_cards = len(self.in_deck_cards)
-    
+            self._shuffle_played_cards()
+        self.in_deck_cards.extend(self.not_in_deck_cards)
+        self.not_in_deck_cards.clear()
+
     def take_cards(self, n):
         given = []
-        if self.num_in_deck_cards < n:
+        if len(self.in_deck_cards) < n:
             self.make_deck_complete()
         for _ in range(n):
             card = self.cards.pop(0)
             given.append(card)
             self.in_deck_cards.remove(card)
-            self.num_in_deck_cards -= 1
             self.not_in_deck_cards.append(card)
-            self.num_not_in_deck_cards += 1
         return given
-    
+
     def put_cards(self, cards):
-        self.not_in_deck_cards = self.not_in_deck_cards + cards
-        self.num_not_in_deck_cards += len(cards)
-    
-    def remove_cards(self, kind, n, mode="first"):
+        self.not_in_deck_cards.extend(cards)
+
+    def remove_cards(self, name, n, mode="first"):
         """
         mode:
             - "first"  -> remove first n matching cards
             - "last"   -> remove last n matching cards
             - "random" -> remove n random matching cards
         """
-        
-        if sum(1 for card in self.in_deck_cards if card.kind == kind) < n:
+
+        if sum(1 for card in self.in_deck_cards if card.name == name) < n:
             self.make_deck_complete()
-            if sum(1 for card in self.in_deck_cards if card.kind == kind) < n:
-                n = sum(1 for card in self.in_deck_cards if card.kind == kind)
+            if sum(1 for card in self.in_deck_cards if card.name == name) < n:
+                n = sum(1 for card in self.in_deck_cards if card.name == name)
 
         # Collect matching indices
-        indices = [i for i, card in enumerate(self.in_deck_cards) if card.kind == kind]
+        indices = [i for i, card in enumerate(self.in_deck_cards) if card.name == name]
 
         if not indices:
             return []
@@ -106,13 +92,11 @@ class DeckOfCards:
         # Remove safely from back to front
         for i in sorted(remove_indices, reverse=True):
             card = self.in_deck_cards.pop(i)
-            card.playable = False
             self.removed_cards.append(card)
-            self.num_removed_cards += 1
             removed.append(card)
 
         return removed
-    
+
     def add_cards(self, card_class, n, mode="random"):
         """
         mode:
@@ -141,9 +125,9 @@ class DeckOfCards:
                 raise ValueError("mode must be 'first', 'last', or 'random'")
 
             self.cards.append(card)
-            self.num_in_deck_cards += 1
             added.append(card)
 
+        # TODO: FIX Bugs =>
         if card_class in self.available_card:
             index = self.available_card.index(card_class)
             self.available_card_types_num[index] += n
