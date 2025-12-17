@@ -1,5 +1,5 @@
 def main() -> None:
-    from morghi.services import MorghiApp
+    from morghi.services import MorghiServer
     from morghi.core import Injector, MorghiConfig
     import os
 
@@ -13,6 +13,6 @@ def main() -> None:
             ),
         ),
     )
-    injector.add_factory(MorghiApp, lambda i: MorghiApp(__name__, i))
-    app: MorghiApp = injector.get_service(MorghiApp)
+    injector.add_factory(MorghiServer, lambda i: MorghiServer(__name__, i))
+    app: MorghiServer = injector.get_service(MorghiServer)
     app.run()

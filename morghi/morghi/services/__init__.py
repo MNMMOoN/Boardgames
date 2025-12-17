@@ -1,1 +1,1 @@
-from .flask_app import MorghiApp as MorghiApp
+from .morghi_server import MorghiServer as MorghiServer

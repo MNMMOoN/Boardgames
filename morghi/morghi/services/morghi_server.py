@@ -7,7 +7,7 @@ from .morghi_game import Game
 from morghi.core import Injector, MorghiConfig
 
 
-class MorghiApp:
+class MorghiServer:
     _app_: flask.Flask
     _games_: dict[int, Game]
     _injector_: Injector
@@ -107,14 +107,14 @@ class MorghiApp:
         self._games_[game.id] = game
         return flask.jsonify(game.get_info()), 201
 
-    def _games__by_id__get_(self, game_id: int) -> tuple[flask.Response, int]:
+    def _games__by_id__get_(self, game_id: int) -> flask.Response:
         user_id, user_name = self._get_auth_()
         print(f"{user_id=}, {user_name=}")
 
         state = self._games_.get(game_id)
         if state is None:
-            return flask.jsonify({"error": "Game not found"}), 404
-        return flask.jsonify(state), 200
+            return flask.jsonify({"error": "Game not found"})
+        return flask.jsonify(state)
 
     def _games__by_id__ready__post_(self, game_id: int) -> tuple[flask.Response, int]:
         user_id, user_name = self._get_auth_()
@@ -130,6 +130,7 @@ class MorghiApp:
         ), 200
 
     def _games__by_id__listen__get_(self, game_id: int) -> tuple[flask.Response, int]:
+        # TODO: Fix `Missing authorization headers` on this endpoint
         user_id, user_name = self._get_auth_()
         print(f"{user_id=}, {user_name=}")
 

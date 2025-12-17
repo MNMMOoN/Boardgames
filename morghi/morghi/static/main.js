@@ -198,7 +198,11 @@
 
   const openStream = (gameId) => {
     closeStream();
-    const es = new EventSource(`/game/${gameId}/listen`);
+    const es = new EventSource(`/games/${gameId}/listen`, {
+      headers: {
+        Authorization: `Bearer ${state.token}`,
+      },
+    });
     state.eventSource = es;
     setStatus("Connected");
 
@@ -269,7 +273,7 @@
 
   // Actions --------------------------------------------------------------
   const enterLobby = async (gameId) => {
-    const data = await api(`/game/${gameId}`);
+    const data = await api(`/games/${gameId}`);
     applyStateFromServer(data);
     showView("lobby");
     openStream(gameId);
@@ -317,7 +321,7 @@
       const desired = !state.lobby.players.find(
         (p) => p.id === state.player?.id
       )?.ready;
-      await api(`/game/${state.currentGame}/ready`, {
+      await api(`/games/${state.currentGame}/ready`, {
         method: "POST",
         body: JSON.stringify({ ready: desired }),
       });
