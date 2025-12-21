@@ -1,7 +1,7 @@
 import typing as T
 
 
-class PlayerState(T.TypedDict):
+class PlayerPublicState(T.TypedDict):
     id: int
     name: str
     ready: bool
@@ -9,24 +9,20 @@ class PlayerState(T.TypedDict):
     chickens: int
 
 
-class YouState(T.TypedDict):
-    id: int
+class PlayerPrivateState(PlayerPublicState):
     hand: list[str]
-    eggs: int
-    chickens: int
+
+
+class Message(T.TypedDict):
+    id: str
+    sender: str
+    text: str
+    time_ms: float
 
 
 class GameState(T.TypedDict):
     id: int
     name: str
     status: str
-    players: list[PlayerState]
-    you: YouState
-    chat: list[ChatMessage]
-
-
-class ChatMessage(T.TypedDict):
-    id: str
-    sender: str
-    text: str
-    ts: int
+    players: list[PlayerPublicState]
+    chat: list[Message]

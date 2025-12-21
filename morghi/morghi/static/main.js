@@ -6,6 +6,7 @@
     token: null,
     games: [],
     currentGame: null,
+    currentPlayer: null,
     lobby: { players: [], status: "Waiting" },
     chat: [],
     hand: [],
@@ -28,7 +29,6 @@
       return {};
     }
   };
-
   const api = async (path, options = {}) => {
     const headers = { "Content-Type": "application/json" };
     if (state.token) headers.Authorization = `Bearer ${state.token}`;
@@ -36,8 +36,7 @@
     if (!res.ok) throw new Error(await res.text());
     return res.json();
   };
-
-  const showView = (name) => {
+  const setView = (name) => {
     views.forEach((v) => {
       el(`view-${v}`)?.classList.toggle("hidden", v !== name);
     });
@@ -45,7 +44,10 @@
     el("breadcrumb").textContent = name.replace("-", " ").toUpperCase();
     el("logout-btn").classList.toggle("hidden", name === "login");
   };
-
+  const setTurn = (pId, pName) => {
+    state.currentPlayer = pId
+    el()
+  };
   const renderGames = (targetId) => {
     const container = el(targetId);
     container.innerHTML = "";
@@ -69,7 +71,6 @@
       container.appendChild(btn);
     });
   };
-
   const renderLobbyPlayers = () => {
     const target = el("lobby-players");
     target.innerHTML = "";
@@ -89,7 +90,6 @@
       target.appendChild(card);
     });
   };
-
   const addChat = (msg) => {
     state.chat.push(msg);
     [el("chat-log"), el("chat-log-game")].forEach((box) => {
@@ -97,7 +97,7 @@
       const line = document.createElement("div");
       line.className = `chat-line ${msg.sender === "system" ? "system" : ""}`;
       line.innerHTML = `
-        <span class="text-xs text-slate-500">${new Date(msg.ts * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+        <span class="text-xs text-slate-500">${new Date(msg.time_ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
         <strong>${msg.sender}</strong>
         <span class="flex-1">${msg.text}</span>
       `;
@@ -105,7 +105,6 @@
       box.scrollTop = box.scrollHeight;
     });
   };
-
   const renderHand = () => {
     const grid = el("hand-grid");
     grid.innerHTML = "";
@@ -120,7 +119,6 @@
       grid.appendChild(tile);
     });
   };
-
   const renderScores = () => {
     el("score-eggs").textContent = state.scores.eggs ?? 0;
     el("score-chickens").textContent = state.scores.chickens ?? 0;
@@ -143,7 +141,6 @@
       board.appendChild(row);
     });
   };
-
   const deriveActions = () => {
     const counts = state.hand.reduce((acc, c) => {
       acc[c.name] = (acc[c.name] || 0) + 1;
@@ -164,7 +161,6 @@
       { key: "replace", label: "Replace a card", enabled: true },
     ];
   };
-
   const renderActions = () => {
     const container = el("actions");
     container.innerHTML = "";
@@ -181,13 +177,12 @@
           id: crypto.randomUUID(),
           sender: "you",
           text: `Action queued: ${action.label}`,
-          ts: Math.floor(Date.now() / 1000),
+          time_ms: Date.now(),
         })
       );
       container.appendChild(btn);
     });
   };
-
   // EventSource handling -------------------------------------------------
   const closeStream = () => {
     if (state.eventSource) {
@@ -195,7 +190,6 @@
       state.eventSource = null;
     }
   };
-
   const openStream = (gameId) => {
     closeStream();
     const es = new EventSource(`/games/${gameId}/listen`, {
@@ -205,52 +199,42 @@
     });
     state.eventSource = es;
     setStatus("Connected");
-
     es.addEventListener("state", (ev) => {
       const payload = JSON.parse(ev.data);
       applyStateFromServer(payload);
     });
-
-    es.addEventListener("game_started", () => {
-      addChat({
-        id: crypto.randomUUID(),
-        sender: "system",
-        text: "Game started!",
-        ts: Math.floor(Date.now() / 1000),
-      });
-      showView("game");
+    es.addEventListener("game_start", () => {
+      setView("game");
     });
-
     es.addEventListener("message", (ev) => {
       const msg = JSON.parse(ev.data);
       addChat(msg);
     });
-
     es.addEventListener("hand_changed", (ev) => {
-      state.hand = JSON.parse(ev.data).hand || state.hand;
+      state.hand = JSON.parse(ev.data).hand;
       renderHand();
       renderActions();
     });
-
+    es.addEventListener("turn", (ev) => {
+      const { id, name } = JSON.parse(ev.data)
+      setTurn(id, name)
+    })
     es.addEventListener("scores_changed", (ev) => {
       const scores = JSON.parse(ev.data);
       state.scores = scores.you || state.scores;
       state.lobby.players = scores.players || state.lobby.players;
       renderScores();
     });
-
     es.addEventListener("fox_incoming", () => {
       addChat({
         id: crypto.randomUUID(),
         sender: "system",
         text: "Fox incoming! You may defend with 2 Roosters.",
-        ts: Math.floor(Date.now() / 1000),
+        time_ms: Date.now(),
       });
     });
-
     es.onerror = () => setStatus("Reconnecting…");
   };
-
   // State application ----------------------------------------------------
   const applyStateFromServer = (payload) => {
     state.currentGame = payload.id;
@@ -275,7 +259,7 @@
   const enterLobby = async (gameId) => {
     const data = await api(`/games/${gameId}`);
     applyStateFromServer(data);
-    showView("lobby");
+    setView("lobby");
     openStream(gameId);
   };
 
@@ -300,7 +284,7 @@
       saveSession();
       setStatus(`Logged in as ${res.player.name}`);
       await loadGames();
-      showView("game-select");
+      setView("game-select");
     });
 
     el("reload-lobby-games").addEventListener("click", loadGames);
@@ -318,18 +302,14 @@
     });
 
     el("ready-btn").addEventListener("click", async () => {
-      const desired = !state.lobby.players.find(
-        (p) => p.id === state.player?.id
-      )?.ready;
       await api(`/games/${state.currentGame}/ready`, {
-        method: "POST",
-        body: JSON.stringify({ ready: desired }),
+        method: "POST"
       });
       addChat({
         id: crypto.randomUUID(),
         sender: "system",
         text: desired ? "You are ready" : "You are not ready",
-        ts: Math.floor(Date.now() / 1000),
+        time_ms: Date.now(),
       });
     });
 
@@ -342,7 +322,7 @@
         id: crypto.randomUUID(),
         sender: state.player?.name || "you",
         text,
-        ts: Math.floor(Date.now() / 1000),
+        time_ms: Date.now(),
       });
       input.value = "";
       // Placeholder: would POST to server here
@@ -360,7 +340,7 @@
       state.token = null;
       localStorage.removeItem("morghi-session");
       setStatus("Offline");
-      showView("login");
+      setView("login");
     });
   };
 
@@ -368,14 +348,15 @@
   const boot = async () => {
     setupEvents();
     const session = loadSession();
+    console.log(`session: ${JSON.stringify(session)}`);
     if (session?.token && session?.player) {
       state.token = session.token;
       state.player = session.player;
       setStatus(`Logged in as ${session.player.name}`);
+      setView("game-select");
       await loadGames();
-      showView("game-select");
     } else {
-      showView("login");
+      setView("login");
       await loadGames();
     }
   };

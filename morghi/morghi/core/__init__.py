@@ -3,7 +3,7 @@ from .config import MorghiConfig as MorghiConfig
 from .injector import Injector as Injector
 from .morghi_card import Card as Card
 from .game_info import GameInfo as GameInfo
-from .state import ChatMessage as ChatMessage
+from .state import Message as Message
 from .state import GameState as GameState
-from .state import PlayerState as PlayerState
-from .state import YouState as YouState
+from .state import PlayerPublicState as PlayerPublicState
+from .state import PlayerPrivateState as PlayerPrivateState

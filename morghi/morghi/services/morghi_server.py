@@ -1,9 +1,11 @@
+import queue
 import flask
 import flask_jwt_extended as jwt
 import json
 import random
 import typing as T
 from .morghi_game import Game
+from .event_update import EventUpdate
 from morghi.core import Injector, MorghiConfig
 
 
@@ -61,17 +63,17 @@ class MorghiServer:
         )
         self._app_.add_url_rule(
             "/games/<game_id>",
-            view_func=self._games__by_id__get_,
+            view_func=self._game__get_,
             methods=["GET"],
         )
         self._app_.add_url_rule(
             "/games/<game_id>/ready",
-            view_func=self._games__by_id__ready__post_,
+            view_func=self._game__ready__post_,
             methods=["POST"],
         )
         self._app_.add_url_rule(
             "/games/<game_id>/listen",
-            view_func=self._games__by_id__listen__get_,
+            view_func=self._game__listen__get_,
             methods=["GET"],
         )
 
@@ -107,30 +109,16 @@ class MorghiServer:
         self._games_[game.id] = game
         return flask.jsonify(game.get_info()), 201
 
-    def _games__by_id__get_(self, game_id: int) -> flask.Response:
+    def _game__get_(self, game_id: int) -> tuple[flask.Response, int]:
         user_id, user_name = self._get_auth_()
         print(f"{user_id=}, {user_name=}")
 
         state = self._games_.get(game_id)
         if state is None:
-            return flask.jsonify({"error": "Game not found"})
-        return flask.jsonify(state)
+            return flask.jsonify({"error": "Game not found"}), 404
+        return flask.jsonify(state), 200
 
-    def _games__by_id__ready__post_(self, game_id: int) -> tuple[flask.Response, int]:
-        user_id, user_name = self._get_auth_()
-        print(f"{user_id=}, {user_name=}")
-
-        payload = flask.request.get_json(silent=True) or {}
-        return flask.jsonify(
-            {
-                "game_id": game_id,
-                "ready": bool(payload.get("ready")),
-                "ack": True,
-            }
-        ), 200
-
-    def _games__by_id__listen__get_(self, game_id: int) -> tuple[flask.Response, int]:
-        # TODO: Fix `Missing authorization headers` on this endpoint
+    def _game__listen__get_(self, game_id: int) -> tuple[flask.Response, int]:
         user_id, user_name = self._get_auth_()
         print(f"{user_id=}, {user_name=}")
 
@@ -141,15 +129,81 @@ class MorghiServer:
             self._event_stream_(game, user_id), mimetype="text/event-stream"
         ), 200
 
+    def _game__join__post_(self, game_id: int) -> tuple[flask.Response, int]:
+        user_id, user_name = self._get_auth_()
+        print(f"{user_id=}, {user_name=}")
+
+        if game_id not in self._games_:
+            return flask.jsonify({"error": "Game not found"}), 404
+        error = self._games_[game_id].on_player_join(user_id)
+        if error:
+            return flask.jsonify({"error": error}), 400
+        else:
+            return flask.Response(None), 204
+
+    def _game__ready__post_(self, game_id: int) -> tuple[flask.Response, int]:
+        user_id, user_name = self._get_auth_()
+        print(f"{user_id=}, {user_name=}")
+        if game_id not in self._games_:
+            return flask.jsonify({"error": "Game not found"}), 404
+        error = self._games_[game_id].on_player_ready(user_id)
+        if error:
+            return flask.jsonify({"error": error}), 400
+        else:
+            return flask.Response(None), 204
+
+    def _game__leave__post_(self, game_id: int) -> tuple[flask.Response, int]:
+        user_id, user_name = self._get_auth_()
+        print(f"{user_id=}, {user_name=}")
+        if game_id not in self._games_:
+            return flask.jsonify({"error": "Game not found"}), 404
+        error = self._games_[game_id].on_player_leave(user_id)
+        if error:
+            return flask.jsonify({"error": error}), 400
+        else:
+            return flask.Response(None), 204
+
+    def _game__draw_card(self, game_id: int) -> tuple[flask.Response, int]:
+        user_id, user_name = self._get_auth_()
+        print(f"{user_id=}, {user_name=}")
+
+        if game_id not in self._games_:
+            return flask.jsonify({"error": "Game not found"}), 404
+        payload = flask.request.get_json(silent=True) or {}
+        card_indices: set[int] = set(map(int, payload.get("cards", [])))
+        if len(card_indices) == 0:
+            return flask.jsonify({"error": "No cards selected"}), 400
+        args: dict[str, str | int] | None = payload.get("args")
+
+        error = self._games_[game_id].on_player_draw_cards(
+            player=user_id,
+            card_indices=card_indices,
+            args=args,
+        )
+        if error:
+            return flask.jsonify({"error": error}), 400
+        else:
+            return flask.Response(None), 204
+
     # Methods
-    def _event_stream_(self, game: Game, user_id: int) -> T.Generator[str, None, None]:
-        queue = game.announcer.add_listener()
-        # Immediately send current state on connection
-        yield json.dumps({"event": "init", "data": game.get_state_for(user_id)})
-        # Send updates
-        while True:
-            msg = queue.get(timeout=10)
-            yield json.dumps(msg)
+    def _event_stream_(
+        self, game: Game, player_id: int
+    ) -> T.Generator[str, None, None]:
+        lq = game.on_player_listen(player_id)
+        try:
+            # Immediately send current state on connection
+            yield json.dumps(EventUpdate(event="state", data=game.get_state(player_id)))
+            # Send updates
+            while True:
+                try:
+                    event_update = lq.get(timeout=10.0)
+                    yield json.dumps(event_update)
+                except queue.Empty:
+                    yield json.dumps(EventUpdate(event="ping", data=None))
+        except Exception as x:
+            print(x)
+        finally:
+            game._announcer_.remove_listener(lq)
 
     def _get_auth_(self) -> tuple[int, str]:
         jwt.verify_jwt_in_request()
