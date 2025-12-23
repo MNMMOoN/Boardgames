@@ -15,7 +15,8 @@ class EventAnnouncer:
 
     def remove_listener(self, q: queue.Queue[EventUpdate]) -> None:
         for ql in self._listeners_.values():
-            _ = ql.remove(q)
+            if q in ql:
+                _ = ql.remove(q)
 
     def announce(self, update: EventUpdate, targets: list[int] | None = None):
         to_remove: list[int] = []

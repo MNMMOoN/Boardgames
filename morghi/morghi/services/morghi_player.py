@@ -1,3 +1,4 @@
+import typing as T
 from morghi.core import PlayerPublicState, PlayerPrivateState
 
 
@@ -28,6 +29,19 @@ class Player:
             chickens=self.num_of_jojos,
             hand=self.hand,
         )
+
+    def take_cards(
+        self, indices: T.Iterable[int], names: list[str]
+    ) -> list[str] | None:
+        for i in indices:
+            if i < 0 or i >= len(self.hand):
+                return None
+            c = self.hand[i]
+            if c in names:
+                names.remove(c)
+        if len(names) > 0:
+            return None
+        return [self.hand.pop(i) for i in sorted(indices, reverse=True)]
 
     # def complete_hand(self, deck: DeckOfCards, indices: T.Sequence[int] | None = None):
     #     if len(self.hand) < rules.MIN_NUM_OF_CARDS_IN_HAND:

@@ -5,5 +5,5 @@ class GameInfo(T.TypedDict):
     id: int
     name: str
     status: str
-    players: int
+    players: list[int]
     capacity: int

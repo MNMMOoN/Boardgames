@@ -1,16 +1,10 @@
-from morghi.core import rules
 import random
 
 
-class DeckOfCards:
-    def __init__(self):
+class Deck:
+    def __init__(self, cards: list[str]):
         # a.k.a. in_deck_cards
-        self._in_deck_: list[str] = [
-            name
-            for cards_category in rules.AVAILABLE_CARDS.values()
-            for name, count in cards_category.items()
-            for _ in range(count)
-        ]
+        self._in_deck_: list[str] = cards
         # a.k.a. not_in_deck_cards
         self._reserved_: list[str] = []
         # For now, always Shuffle to keep things simple
