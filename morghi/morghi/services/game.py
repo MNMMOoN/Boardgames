@@ -1,24 +1,20 @@
 import time
 import queue
 import random
-from morghi.core import actions, Cards, Rules, GameState, GameInfo, Message
+import typing as T
+from morghi.core import actions, Cards, Rules, GameState, Message
 from .event_update import EventUpdate
 from .event_announcer import EventAnnouncer
-from .morghi_deck import Deck
-from .morghi_player import Player
+from .deck import Deck
+from .player import Player
 
 
-class PlayResult:
-    next_player: bool
-    error: str | None
-
-    def __init__(self, next_player: bool, error: str | None):
-        self.next_player = next_player
-        self.error = error
-
-    @classmethod
-    def err(cls, error: str) -> PlayResult:
-        return PlayResult(next_player=False, error=error)
+class GameInfo(T.TypedDict):
+    id: int
+    name: str
+    status: str
+    players: list[int]
+    capacity: int
 
 
 class Game:
@@ -137,21 +133,6 @@ class Game:
             self._announcer_.announce(EventUpdate.state(self.get_state(player=p_id)))
         return None
 
-    def _validate_action_(self, player: int, action_name: str) -> str | Player:
-        if not self.is_started:
-            return "The game has not started yet"
-        if player != self._current_player_:
-            return "It is not your turn"
-        p = self._players_.get(player)
-        if p is None:
-            return f"Player '{player}' not found"
-        if (
-            self._expected_reaction_ is not None
-            and self._expected_reaction_.name != action_name
-        ):
-            return f"Expected reaction '{self._expected_reaction_.name}', Found '{action_name}'"
-        return p
-
     def on_action(self, player: int, action: actions.Action) -> str | None:
         p = self._validate_action_(player, action.name)
         if isinstance(p, str):
@@ -170,6 +151,21 @@ class Game:
         else:
             return f"Unknown action '{action.name}'"
 
+    def _validate_action_(self, player: int, action_name: str) -> str | Player:
+        if not self.is_started:
+            return "The game has not started yet"
+        if player != self._current_player_:
+            return "It is not your turn"
+        p = self._players_.get(player)
+        if p is None:
+            return f"Player '{player}' not found"
+        if (
+            self._expected_reaction_ is not None
+            and self._expected_reaction_.name != action_name
+        ):
+            return f"Expected reaction '{self._expected_reaction_.name}', Found '{action_name}'"
+        return p
+
     def _exec_skip_turn_(self, player: Player, action: actions.SkipTurn) -> str | None:
         if len(action.card_indices) != 1:
             return "Invalid number of cards"
@@ -178,7 +174,7 @@ class Game:
             return f"Invalid card index '{ci}'"
         card = player.hand.pop(ci)
         self._deck_.put([card])
-        player.hand.extend(self._deck_.take(1))
+        player.put_cards(self._deck_.take(1))
         self._announcer_.announce(
             update=EventUpdate.hand_changed(
                 player_id=player.id,
@@ -204,7 +200,7 @@ class Game:
         if cards is None:
             return "Invalid cards"
         self._deck_.put(cards)
-        player.hand.extend(self._deck_.take(len(cards)))
+        player.put_cards(self._deck_.take(len(cards)))
         player.num_of_tokhms += 1
         self._announcer_.announce(
             update=EventUpdate.scores_changed(
@@ -235,7 +231,7 @@ class Game:
         if cards is None:
             return "Invalid card"
         self._deck_.put(cards)
-        player.hand.extend(self._deck_.take(len(cards)))
+        player.put_cards(self._deck_.take(len(cards)))
         self._announcer_.announce(
             update=EventUpdate.hand_changed(
                 player_id=player.id,
@@ -261,7 +257,7 @@ class Game:
         if cards is None:
             return "Invalid cards"
         self._deck_.put(cards)
-        player.hand.extend(self._deck_.take(len(cards)))
+        player.put_cards(self._deck_.take(len(cards)))
         self._expected_reaction_ = None
         self._announcer_.announce(
             update=EventUpdate.hand_changed(
@@ -291,7 +287,7 @@ class Game:
         if cards is None:
             return "Invalid cards"
         self._deck_.put(cards)
-        player.hand.extend(self._deck_.take(len(cards)))
+        player.put_cards(self._deck_.take(len(cards)))
         target.num_of_tokhms -= count
         self._announcer_.announce(
             update=EventUpdate.scores_changed(

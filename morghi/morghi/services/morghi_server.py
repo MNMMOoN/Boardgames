@@ -6,14 +6,9 @@ import queue
 import random
 import traceback
 import typing as T
-from .morghi_game import Game
+from .game import Game
 from .event_update import EventUpdate
-from morghi.core import (
-    Injector,
-    MorghiConfig,
-    GameAction,
-    create_action_from_dict,
-)
+from morghi.core import Injector, MorghiConfig, actions
 
 
 class MorghiServer:
@@ -217,16 +212,16 @@ class MorghiServer:
             traceback.print_exception(x)
             return flask.jsonify({"error": "Action name is required"}), 400
         try:
-            action_request: GameAction = create_action_from_dict(
+            action_request: actions.Action = actions.Action.create_from_dict(
                 name=action_name,
                 data=payload,
             )
         except Exception as x:
             traceback.print_exception(x)
             return flask.jsonify(
-                {"error": f"Failed to parse Action '{action_name}'; {x}"}
+                {"error": f"Failed to parse action '{action_name}'; {x}"}
             ), 400
-        # Create Action
+        # areates Action
         error = self._games_[game_id].on_action(player=user_id, action=action_request)
         if error:
             return flask.jsonify({"error": error}), 400

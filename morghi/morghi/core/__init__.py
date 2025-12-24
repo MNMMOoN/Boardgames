@@ -2,7 +2,6 @@ from . import actions as actions
 from .rules import Cards as Cards
 from .rules import Rules as Rules
 from .config import MorghiConfig as MorghiConfig
-from .game_info import GameInfo as GameInfo
 from .injector import Injector as Injector
 from .state import GameState as GameState
 from .state import Message as Message
