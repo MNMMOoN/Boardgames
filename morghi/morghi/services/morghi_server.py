@@ -1,7 +1,9 @@
 import datetime
 import flask
+import flask_cors
 import flask_jwt_extended as jwt
 import json
+import os
 import queue
 import random
 import traceback
@@ -19,7 +21,13 @@ class MorghiServer:
     def __init__(self, root_module_name: str, injector: Injector) -> None:
         self._injector_ = injector
         self._games_ = {}
-        self._app_ = flask.Flask(root_module_name)
+        self._app_ = flask.Flask(root_module_name, static_folder="static")
+        flask_cors.CORS(
+            self._app_,
+            methods=["GET", "POST"],
+            supports_credentials=True,
+            origins="*",
+        )
         self._jwt_ = jwt.JWTManager(self._app_)
         config: MorghiConfig = injector.get_service(MorghiConfig)
         self._app_.config["JWT_SECRET_KEY"] = config["jwt_secret"]
@@ -32,20 +40,14 @@ class MorghiServer:
     def _register_routes_(self) -> None:
         self._app_.add_url_rule(
             "/",
-            endpoint="/main.html",
-            view_func=lambda: self._app_.send_static_file("main.html"),
+            endpoint="/index.html",
+            view_func=lambda: self._app_.send_static_file("index.html"),
             methods=["GET"],
         )
         self._app_.add_url_rule(
-            "/main.css",
-            endpoint="/main.css",
-            view_func=lambda: self._app_.send_static_file("main.css"),
-            methods=["GET"],
-        )
-        self._app_.add_url_rule(
-            "/main.js",
-            endpoint="/main.js",
-            view_func=lambda: self._app_.send_static_file("main.js"),
+            "/assets/<path>",
+            endpoint="/assets/<path>",
+            view_func=lambda path: self._app_.send_static_file(f"assets/{path}"),
             methods=["GET"],
         )
         self._app_.add_url_rule(
@@ -97,7 +99,8 @@ class MorghiServer:
     # EndPoints
     def _login__post_(self) -> tuple[flask.Response, int]:
         try:
-            name: str = str(flask.request.get_json()["name"])
+            req_body = flask.request.get_json()["body"]
+            name: str = str(req_body["name"])
         except Exception as x:
             traceback.print_exception(x)
             return flask.jsonify({"error": "Name is required"}), 400
@@ -110,7 +113,8 @@ class MorghiServer:
         return flask.jsonify(
             {
                 "token": token,
-                "player": {"id": id, "name": name},
+                "playerId": id,
+                "playerName": name,
             }
         ), 200
 
@@ -126,7 +130,8 @@ class MorghiServer:
         print(f"{user_id=}, {user_name=}")
 
         try:
-            name: str = str(flask.request.get_json()["name"])
+            req_body = flask.request.get_json()["body"]
+            name: str = str(req_body["name"])
         except Exception as x:
             traceback.print_exception(x)
             return flask.jsonify({"error": "Name is required"}), 400
@@ -202,7 +207,7 @@ class MorghiServer:
         if game_id not in self._games_:
             return flask.jsonify({"error": "Game not found"}), 404
         try:
-            payload = dict(flask.request.get_json())
+            payload = dict(flask.request.get_json()["body"])
         except Exception as x:
             traceback.print_exception(x)
             return flask.jsonify({"error": "Invalid payload"}), 400
