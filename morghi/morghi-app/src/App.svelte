@@ -1,12 +1,20 @@
 <script lang="ts">
-  import { AuthState } from "./core/state.svelte";
-  import LoginPage from "./pages/LoginPage.svelte";
+  import { AuthState, GameInfo } from "./core/state";
+  import GamePage from "./views/GamePage.svelte";
+  import LoginPage from "./views/LoginPage.svelte";
+  import PlayerPage from "./views/PlayerPage.svelte";
   let auth: AuthState | null = $state(AuthState.load());
-  const isLoggedIn: boolean = $derived(auth != null);
+  let game: GameInfo | null = $state(null);
 </script>
 
-{#if isLoggedIn}
-  <h1>Page</h1>
+{#if auth === null}
+  <LoginPage bind:result={auth} />
+{:else if game !== null}
+  <GamePage {auth} {game} onLeftGame={() => (game = null)} />
 {:else}
-  <LoginPage bind:auth />
+  <PlayerPage
+    {auth}
+    onClickedLogout={() => (auth = null)}
+    onEnterGame={(g) => (game = g)}
+  />
 {/if}

@@ -1,3 +1,4 @@
+import json
 import typing as T
 from morghi.core import GameState, Message
 
@@ -16,64 +17,54 @@ class EventUpdate:
             "data": self.data,
         }
 
-    @classmethod
-    def message(cls, message: Message):
-        return EventUpdate(
-            event="message",
-            data=message,
-        )
+    def to_event_text(self):
+        return f"event: {self.event}\ndata: {json.dumps(self.data)}\n\n"
 
-    @classmethod
-    def state(cls, state: GameState):
+    @staticmethod
+    def state(state: GameState):
         return EventUpdate(
             event="state",
             data=state,
         )
 
-    @classmethod
-    def game_start(cls):
+    @staticmethod
+    def message(message: Message):
+        return EventUpdate(
+            event="message",
+            data=message,
+        )
+
+    @staticmethod
+    def player_ready(player_id: int):
+        return EventUpdate(
+            event="player_ready",
+            data=player_id,
+        )
+
+    @staticmethod
+    def game_start():
         return EventUpdate(
             event="game_start",
             data=None,
         )
 
-    @classmethod
-    def turn(cls, player_id: int, player_name: str):
+    @staticmethod
+    def turn(player_id: int, player_name: str):
         return EventUpdate(
             event="turn",
             data={"id": player_id, "name": player_name},
         )
 
-    @classmethod
-    def hand_changed(cls, player_id: int, hand: list[str]):
+    @staticmethod
+    def hand_changed(player_id: int, hand: list[str]):
         return EventUpdate(
             event="hand_changed",
             data={"player": player_id, "hand": hand},
         )
 
-    @classmethod
-    def reaction_expectation(cls, cause: str, acting_player: int, reacting_player: int):
-        return EventUpdate(
-            event="reaction_expectation",
-            data={
-                "cause": cause,
-                "acting_player": acting_player,
-                "reacting_player": reacting_player,
-            },
-        )
-
-    @classmethod
-    def scores_changed(cls, player: int, eggs: int, chickens: int):
+    @staticmethod
+    def scores_changed(player: int, eggs: int, chickens: int):
         return EventUpdate(
             event="scores_changed",
             data={"player": player, "eggs": eggs, "chickens": chickens},
-        )
-
-    @classmethod
-    def cards_drawn(
-        cls, player: int, cards: list[str], args: dict[str, str | int] | None
-    ):
-        return EventUpdate(
-            event="card_drawn",
-            data={"player": player, "cards": cards, "args": args},
         )

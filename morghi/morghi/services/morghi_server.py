@@ -2,8 +2,6 @@ import datetime
 import flask
 import flask_cors
 import flask_jwt_extended as jwt
-import json
-import os
 import queue
 import random
 import traceback
@@ -71,11 +69,6 @@ class MorghiServer:
             methods=["GET"],
         )
         self._app_.add_url_rule(
-            "/games/<game_id>/listen",
-            view_func=self._game__listen__get_,
-            methods=["GET"],
-        )
-        self._app_.add_url_rule(
             "/games/<game_id>/join",
             view_func=self._game__join__post_,
             methods=["POST"],
@@ -99,7 +92,7 @@ class MorghiServer:
     # EndPoints
     def _login__post_(self) -> tuple[flask.Response, int]:
         try:
-            req_body = flask.request.get_json()["body"]
+            req_body = flask.request.get_json()
             name: str = str(req_body["name"])
         except Exception as x:
             traceback.print_exception(x)
@@ -120,17 +113,13 @@ class MorghiServer:
 
     def _games__get_(self) -> tuple[flask.Response, int]:
         user_id, user_name = self._get_auth_()
-        print(f"{user_id=}, {user_name=}")
-
         games = [g.get_info() for g in self._games_.values()]
         return flask.jsonify({"games": games}), 200
 
     def _games__post_(self) -> tuple[flask.Response, int]:
         user_id, user_name = self._get_auth_()
-        print(f"{user_id=}, {user_name=}")
-
         try:
-            req_body = flask.request.get_json()["body"]
+            req_body = flask.request.get_json()
             name: str = str(req_body["name"])
         except Exception as x:
             traceback.print_exception(x)
@@ -142,18 +131,6 @@ class MorghiServer:
     def _game__get_(self, game_id: str | int) -> tuple[flask.Response, int]:
         game_id = int(game_id)
         user_id, user_name = self._get_auth_()
-        print(f"{user_id=}, {user_name=}, {game_id=}, {type(game_id)=}")
-
-        state = self._games_.get(game_id)
-        if state is None:
-            return flask.jsonify({"error": "Game not found"}), 404
-        return flask.jsonify(state), 200
-
-    def _game__listen__get_(self, game_id: str | int) -> tuple[flask.Response, int]:
-        game_id = int(game_id)
-        user_id, user_name = self._get_auth_()
-        print(f"{user_id=}, {user_name=}")
-
         game = self._games_.get(game_id)
         if game is None:
             return flask.jsonify({"error": "Game not found"}), 404
@@ -164,7 +141,6 @@ class MorghiServer:
     def _game__join__post_(self, game_id: str | int) -> tuple[flask.Response, int]:
         game_id = int(game_id)
         user_id, user_name = self._get_auth_()
-        print(f"{user_id=}, {user_name=}, {game_id=}, {type(game_id)=}")
 
         game = self._games_.get(game_id)
         if game is None:
@@ -178,7 +154,7 @@ class MorghiServer:
     def _game__ready__post_(self, game_id: str | int) -> tuple[flask.Response, int]:
         game_id = int(game_id)
         user_id, user_name = self._get_auth_()
-        print(f"{user_id=}, {user_name=}")
+
         if game_id not in self._games_:
             return flask.jsonify({"error": "Game not found"}), 404
         error = self._games_[game_id].on_player_ready(user_id)
@@ -190,7 +166,7 @@ class MorghiServer:
     def _game__leave__post_(self, game_id: str | int) -> tuple[flask.Response, int]:
         game_id = int(game_id)
         user_id, user_name = self._get_auth_()
-        print(f"{user_id=}, {user_name=}")
+
         if game_id not in self._games_:
             return flask.jsonify({"error": "Game not found"}), 404
         error = self._games_[game_id].on_player_leave(user_id)
@@ -202,12 +178,10 @@ class MorghiServer:
     def _game__action__post_(self, game_id: str | int) -> tuple[flask.Response, int]:
         game_id = int(game_id)
         user_id, user_name = self._get_auth_()
-        print(f"{user_id=}, {user_name=}")
-
         if game_id not in self._games_:
             return flask.jsonify({"error": "Game not found"}), 404
         try:
-            payload = dict(flask.request.get_json()["body"])
+            payload = dict(flask.request.get_json())
         except Exception as x:
             traceback.print_exception(x)
             return flask.jsonify({"error": "Invalid payload"}), 400
@@ -241,14 +215,16 @@ class MorghiServer:
         try:
             # Immediately send current state on connection
             eu = EventUpdate(event="state", data=game.get_state(player_id))
-            yield json.dumps(eu.to_dict())
+            print(f"SSE {game.id}/{player_id}: state")
+            yield eu.to_event_text()
             # Send updates
             while True:
                 try:
                     eu = lq.get(timeout=10.0)
                 except queue.Empty:
                     eu = EventUpdate(event="ping", data=None)
-                yield json.dumps(eu.to_dict())
+                print(f"SSE {game.id}/{player_id}: {eu.event}")
+                yield eu.to_event_text()
         except Exception as x:
             print(x)
         finally:

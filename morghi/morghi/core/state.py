@@ -14,7 +14,7 @@ class PlayerPrivateState(PlayerPublicState):
 
 
 class Message(T.TypedDict):
-    id: str
+    id: int
     sender: str
     text: str
     time_ms: float
@@ -25,4 +25,4 @@ class GameState(T.TypedDict):
     name: str
     status: str
     players: list[PlayerPublicState]
-    chat: list[Message]
+    messages: list[Message]

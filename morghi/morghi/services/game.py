@@ -29,15 +29,17 @@ class Game:
         self._turn_: int = 0
         self._current_player_: int = -1
         self._expected_reaction_: actions.Action | None = None
-        self._messages_: dict[str, Message] = {}
+        self._messages_: list[Message] = []
 
     def _create_message_(self, text: str, sender: str = "system"):
-        return Message(
-            id=str(len(self._messages_)),
+        ret = Message(
+            id=len(self._messages_),
             sender=sender,
             text=text,
             time_ms=time.time() * 1000.0,
         )
+        self._messages_.append(ret)
+        return ret
 
     def _start_game_(self) -> None:
         for player in self._players_.values():
@@ -52,7 +54,6 @@ class Game:
         self._announcer_.announce(EventUpdate.game_start())
         self.is_started = True
         msg = self._create_message_("Game Started")
-        self._messages_[msg["id"]] = msg
         self._announcer_.announce(EventUpdate.message(msg))
         self._next_player_()
 
@@ -92,7 +93,7 @@ class Game:
                 else p.get_state(is_ready=p in self._players_ready_)
                 for p in self._players_.values()
             ],
-            chat=list(self._messages_.values()),
+            messages=self._messages_,
         )
 
     def on_player_listen(self, player: int) -> queue.Queue[EventUpdate]:
@@ -118,8 +119,8 @@ class Game:
         if p.id not in self._players_ready_:
             self._players_ready_.append(p.id)
             msg = self._create_message_(f"{p.name} is ready")
-            self._messages_[msg["id"]] = msg
             self._announcer_.announce(EventUpdate.message(msg))
+            self._announcer_.announce(EventUpdate.player_ready(p.id))
         if len(self._players_ready_) == len(self._players_):
             self._start_game_()
         return None

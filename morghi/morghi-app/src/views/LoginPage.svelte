@@ -1,36 +1,27 @@
 <script lang="ts">
-    import { api } from "../core/api";
-    import { AuthState } from "../core/state.svelte";
-    let { auth = $bindable() }: { auth: AuthState | null } = $props();
+    import api from "../core/api";
+    import { AuthState } from "../core/state";
+    let { result = $bindable() }: { result: AuthState | null } = $props();
     let name: string = $state("");
     let loggingIn: Promise<any> | null = $state(null);
+
     async function onBtnLoginClicked(): Promise<void> {
-        loggingIn = api
-            .fetchPost("/login", null, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: {
-                    name: name,
-                },
-            })
-            .then((r) => {
-                console.log(r);
-                try {
-                    auth = AuthState.from_json(r);
-                    auth.save();
-                } catch (e) {
-                    console.error(e);
-                }
-            })
-            .catch((x) => {
-                console.error(x);
-            });
+        loggingIn = api.post("/login", null, { name: name });
+        try {
+            let r = await loggingIn;
+            let auth = AuthState.from_json(r);
+            auth.save();
+            result = auth;
+        } catch (e) {
+            console.error(e);
+        }
     }
 </script>
 
 <main>
+    {#if result !== null}
+        <h4>Welcome {result.playerName}</h4>
+    {/if}
     {#if loggingIn === null}
         <div>
             <label for="name">Name:</label>
@@ -44,9 +35,6 @@
     {:else}
         {#await loggingIn}
             <h4>Logging In ...</h4>
-        {:then result}
-            <h4>Logged In</h4>
-            <p>{result}</p>
         {:catch error: Error}
             <h4>{error.name}</h4>
             <p>{error.message}</p>
