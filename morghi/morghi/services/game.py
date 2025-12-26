@@ -90,9 +90,9 @@ class Game:
             name=self.name,
             status="Playing" if self.is_started else "Waiting",
             players=[
-                p.get_private_state(is_ready=p in self._players_ready_)
+                p.get_private_state(is_ready=p.id in self._players_ready_)
                 if p.id == player
-                else p.get_state(is_ready=p in self._players_ready_)
+                else p.get_state(is_ready=p.id in self._players_ready_)
                 for p in self._players_.values()
             ],
             messages=self._messages_,
