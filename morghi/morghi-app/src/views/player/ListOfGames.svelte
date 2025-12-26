@@ -1,11 +1,11 @@
 <script lang="ts">
     import api from "../../core/api";
-    import { AuthState, GameInfo } from "../../core/state";
+    import { GameInfo, GameState } from "../../core/state";
+    import auth from "../../services/auth.svelte";
     interface Props {
-        auth: AuthState;
         onEnterGame: (game: GameInfo) => void;
     }
-    let { auth, onEnterGame }: Props = $props();
+    let { onEnterGame }: Props = $props();
     async function getListOfGames(): Promise<GameInfo[]> {
         let games: GameInfo[] = [];
         try {
@@ -33,10 +33,7 @@
         pListingGames = getListOfGames();
     }
     async function joinGame(game: GameInfo): Promise<void> {
-        let response: {} = await api.post(
-            "/games/" + game.id + "/join",
-            auth.token,
-        );
+        await api.post("/games/" + game.id + "/join", auth.token);
         onEnterGame(game);
     }
 </script>
@@ -45,14 +42,34 @@
     {#await pListingGames}
         <p>Loading Games ...</p>
     {:then result}
-        {#each result as game}
-            <div
-                style="display: flex; justify-content: center; align-items: center;"
-            >
-                <p style="padding: 8px 16px;">{game.name}</p>
-                <button onclick={() => joinGame(game)}>Join</button>
-            </div>
-        {/each}
+        <table>
+            <thead>
+                <tr>
+                    <th style="min-width: 64px;">Id</th>
+                    <th style="min-width: 64px;">Name</th>
+                    <th style="min-width: 64px;">Players</th>
+                    <th style="min-width: 64px;">Status</th>
+                    <th style="min-width: 64px;"></th>
+                </tr>
+            </thead>
+            <tbody>
+                {#each result as game}
+                    <tr>
+                        <td>{game.id}</td>
+                        <td>{game.name}</td>
+                        <td>{game.players.length} / {game.capacity}</td>
+                        <td>{game.status}</td>
+                        <td>
+                            {#if !game.isStarted}
+                                <button onclick={() => joinGame(game)}>
+                                    Join
+                                </button>
+                            {/if}
+                        </td>
+                    </tr>
+                {/each}
+            </tbody>
+        </table>
     {:catch error: Error}
         <p>{error.name}</p>
         <p>{error.message}</p>

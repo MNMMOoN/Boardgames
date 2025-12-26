@@ -1,15 +1,14 @@
 <script lang="ts">
-    import api from "../core/api";
-    import { AuthState, GameInfo } from "../core/state";
+    import { GameInfo } from "../core/state";
     import NewGame from "./player/NewGame.svelte";
     import ListOfGames from "./player/ListOfGames.svelte";
+    import auth from "../services/auth.svelte";
     interface Props {
-        auth: AuthState;
         onEnterGame: (game: GameInfo) => void;
-        onClickedLogout: () => void;
     }
+
     let games: ListOfGames;
-    let { auth, onEnterGame, onClickedLogout }: Props = $props();
+    let { onEnterGame }: Props = $props();
     function onNewGameCreated(): void {
         games.refresh();
     }
@@ -17,11 +16,11 @@
 
 <header style="display: flex; justify-content: space-between;">
     <p>Morghi :3</p>
-    <button onclick={onClickedLogout}>Logout</button>
+    <button onclick={() => auth.logout()}>Logout</button>
 </header>
 
 <main>
     <h1>Hallo {auth.playerName} :3</h1>
-    <NewGame {auth} {onNewGameCreated} />
-    <ListOfGames bind:this={games} {auth} {onEnterGame} />
+    <NewGame {onNewGameCreated} />
+    <ListOfGames bind:this={games} {onEnterGame} />
 </main>

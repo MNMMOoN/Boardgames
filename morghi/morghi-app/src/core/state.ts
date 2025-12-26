@@ -1,48 +1,17 @@
-export class AuthState {
-    public readonly token: string;
-    public readonly playerId: number;
-    public readonly playerName: string;
-    constructor(token: string, userId: number, userName: string) {
-        this.token = token;
-        this.playerId = userId;
-        this.playerName = userName;
-    }
-    public save() {
-        localStorage.setItem('auth', JSON.stringify(this));
-    }
-    public static load(): AuthState | null {
-        let item = localStorage.getItem('auth');
-        if (item == null) { return null; }
-        try {
-            return AuthState.from_json(item);
-        } catch (x) {
-            console.error(x);
-            localStorage.removeItem('auth');
-            return null;
-        }
-    }
-    public static from_json(json: any): AuthState {
-        if (typeof json === 'string') { json = JSON.parse(json); }
-        if (json == null) { throw new Error('Invalid json, Parsed item is null'); }
-        if (typeof json !== 'object') { throw new Error('Invalid json, Parsed item not an object') }
-        if (typeof json['token'] !== 'string') { throw new Error("'token' not found or invalid in parsed json object") }
-        if (typeof json['playerId'] !== 'number') { throw new Error("'playerId' not found or invalid in parsed json object") }
-        if (typeof json['playerName'] !== 'string') { throw new Error("'playerName' not found or invalid in parsed json object") }
-        return new AuthState(json['token'], json['playerId'], json['playerName']);
-    }
-}
 export class GameInfo {
     public id: number
     public name: string
     public status: string
     public players: number[]
     public capacity: number
-    constructor(id: number, name: string, status: string, players: number[], capacity: number) {
+    public isStarted: boolean
+    constructor(id: number, name: string, status: string, players: number[], capacity: number, isStarted: boolean) {
         this.id = id;
         this.name = name;
         this.status = status;
         this.players = players;
         this.capacity = capacity;
+        this.isStarted = isStarted;
     }
     public static from_json(json: any): GameInfo {
         if (typeof json === 'string') { json = JSON.parse(json); }
@@ -53,19 +22,21 @@ export class GameInfo {
         if (typeof json['status'] !== 'string') { throw new Error("'status' not found or invalid in parsed json object") }
         if (typeof json['players'] !== 'object') { throw new Error("'players' not found or invalid in parsed json object") }
         if (typeof json['capacity'] !== 'number') { throw new Error("'capacity' not found or invalid in parsed json object") }
-        return new GameInfo(json.id, json.name, json.status, json.players, json.capacity);
+        if (typeof json['is_started'] !== 'boolean') { throw new Error("'is_started' not found or invalid in parsed json object") }
+        return new GameInfo(json.id, json.name, json.status, json.players, json.capacity, json.is_started);
     }
 }
 export class Message {
     public id: number
     public sender: string
     public text: string
-    public time_ms: number
+    public time: Date
     constructor(id: number, sender: string, text: string, time_ms: number) {
         this.id = id;
         this.sender = sender;
         this.text = text;
-        this.time_ms = time_ms;
+        this.time = new Date();
+        this.time.setTime(time_ms);
     }
     public static from_json(json: any): Message {
         if (typeof json === 'string') { json = JSON.parse(json); }
@@ -113,12 +84,14 @@ export class GameState {
     public status: string
     public players: PlayerState[]
     public messages: Message[]
-    constructor(id: number, name: string, status: string, players: PlayerState[], messages: Message[]) {
+    public isStarted: boolean
+    constructor(id: number, name: string, status: string, players: PlayerState[], messages: Message[], isStarted: boolean) {
         this.id = id;
         this.name = name;
         this.status = status;
         this.players = players;
         this.messages = messages;
+        this.isStarted = isStarted;
     }
     public static from_json(json: any): GameState {
         if (typeof json === 'string') { json = JSON.parse(json); }
@@ -129,6 +102,7 @@ export class GameState {
         if (typeof json['status'] !== 'string') { throw new Error("'status' not found or invalid in parsed json object") }
         if (typeof json['players'] !== 'object') { throw new Error("'players' not found or invalid in parsed json object") }
         if (typeof json['messages'] !== 'object') { throw new Error("'messages' not found or invalid in parsed json object") }
+        if (typeof json['is_started'] !== 'boolean') { throw new Error("'is_started' not found or invalid in parsed json object") }
         let players: PlayerState[] = [];
         for (let i = 0; i < json['players'].length; i++) {
             players.push(PlayerState.from_json(json['players'][i]));
@@ -137,6 +111,6 @@ export class GameState {
         for (let i = 0; i < json['messages'].length; i++) {
             messages.push(Message.from_json(json['messages'][i]));
         }
-        return new GameState(json.id, json.name, json.status, players, messages);
+        return new GameState(json.id, json.name, json.status, players, messages, json.is_started);
     }
 }

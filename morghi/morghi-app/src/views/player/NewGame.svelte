@@ -1,14 +1,18 @@
 <script lang="ts">
     import api from "../../core/api";
-    import { AuthState } from "../../core/state";
+    import auth from "../../services/auth.svelte";
     interface Props {
-        auth: AuthState;
         onNewGameCreated: () => void;
     }
-    let { auth, onNewGameCreated }: Props = $props();
+
+    let { onNewGameCreated }: Props = $props();
     let gameName: string = $state("");
     let pCreatingGame: Promise<void> = $state(Promise.resolve());
     async function CreateGame(): Promise<void> {
+        await Promise.resolve();
+        if (gameName === "") {
+            throw new Error("Game name cannot be empty");
+        }
         await api.post("/games", auth.token, { name: gameName });
         onNewGameCreated();
     }
@@ -18,25 +22,33 @@
 </script>
 
 {#snippet content()}
-    <div>
+    <div
+        style:display="flex"
+        style:justify-content="space-between"
+        style:align-items="center"
+    >
         <label for="name">Create Game:</label>
         <input
             name="name"
-            placeholder="Enter a name for the new game"
+            type="text"
+            placeholder="Name the new game"
+            style:padding="4px"
+            style:margin="2px 16px"
+            required
             bind:value={gameName}
         />
+        <button style="margin: 8px;" onclick={onBtnCreateGameClicked}>
+            Create Game
+        </button>
     </div>
-    <button style="margin: 8px;" onclick={onBtnCreateGameClicked}>
-        Create Game
-    </button>
 {/snippet}
 <div>
     {#await pCreatingGame}
         <p>Creating Game</p>
     {:then}
         {@render content()}
-    {:catch}
-        <p style="color: red;">Failed to create game</p>
+    {:catch x: Error}
+        <p style="color: red;">{x.name}: {x.message}</p>
         {@render content()}
     {/await}
 </div>

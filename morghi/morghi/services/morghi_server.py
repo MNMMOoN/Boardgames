@@ -145,7 +145,7 @@ class MorghiServer:
         game = self._games_.get(game_id)
         if game is None:
             return flask.jsonify({"error": "Game not found"}), 404
-        error = game.on_player_join(user_id)
+        error = game.on_player_join(user_id, user_name)
         if error:
             return flask.jsonify({"error": error}), 400
         else:

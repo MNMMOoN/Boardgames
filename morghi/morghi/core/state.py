@@ -26,3 +26,4 @@ class GameState(T.TypedDict):
     status: str
     players: list[PlayerPublicState]
     messages: list[Message]
+    is_started: bool

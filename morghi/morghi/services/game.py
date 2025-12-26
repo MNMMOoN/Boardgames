@@ -15,6 +15,7 @@ class GameInfo(T.TypedDict):
     status: str
     players: list[int]
     capacity: int
+    is_started: bool
 
 
 class Game:
@@ -23,7 +24,7 @@ class Game:
         self.name: str = name
         self._announcer_: EventAnnouncer = EventAnnouncer()
         self.is_started: bool = False
-        self._players_ready_: list[int] = []
+        self._players_ready_: set[int] = set()
         self._players_: dict[int, Player] = {}
         self._deck_ = Deck(Cards.all())
         self._turn_: int = 0
@@ -31,7 +32,7 @@ class Game:
         self._expected_reaction_: actions.Action | None = None
         self._messages_: list[Message] = []
 
-    def _create_message_(self, text: str, sender: str = "system"):
+    def _create_message_(self, text: str, sender: str = ""):
         ret = Message(
             id=len(self._messages_),
             sender=sender,
@@ -80,6 +81,7 @@ class Game:
             status="Playing" if self.is_started else "Waiting",
             players=list(self._players_.keys()),
             capacity=Rules.MAX_PLAYERS_COUNT,
+            is_started=self.is_started,
         )
 
     def get_state(self, player: int | None = None) -> GameState:
@@ -94,18 +96,20 @@ class Game:
                 for p in self._players_.values()
             ],
             messages=self._messages_,
+            is_started=self.is_started,
         )
 
     def on_player_listen(self, player: int) -> queue.Queue[EventUpdate]:
         ret = self._announcer_.add_listener(player)
         return ret
 
-    def on_player_join(self, player: int) -> str | None:
-        if player in self._players_:
+    def on_player_join(self, id: int, name: str) -> str | None:
+        if id in self._players_:
             return None
         if self.is_started:
             return "The game has already started"
-        self._players_[player] = Player(id=player, name=f"Player {player}")
+        self._players_[id] = Player(id=id, name=name)
+        self._create_message_(f"{name} joined the game")
         for p_id in self._players_.keys():
             self._announcer_.announce(EventUpdate.state(self.get_state(player=p_id)))
         return None
@@ -117,7 +121,7 @@ class Game:
         if p is None:
             return "Player not found"
         if p.id not in self._players_ready_:
-            self._players_ready_.append(p.id)
+            self._players_ready_.add(p.id)
             msg = self._create_message_(f"{p.name} is ready")
             self._announcer_.announce(EventUpdate.message(msg))
             self._announcer_.announce(EventUpdate.player_ready(p.id))
@@ -130,6 +134,9 @@ class Game:
         if p is None:
             return "Player not found"
         self._players_.pop(player)
+        if player in self._players_ready_:
+            self._players_ready_.remove(player)
+        _ = self._create_message_(f"{p.name} left the game")
         for p_id in self._players_.keys():
             self._announcer_.announce(EventUpdate.state(self.get_state(player=p_id)))
         return None
