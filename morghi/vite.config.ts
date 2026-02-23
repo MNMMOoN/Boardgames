@@ -1,7 +1,5 @@
-import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
+import { defineConfig } from 'vite';
+import vue from '@vitejs/plugin-vue';
+import tsNameof from 'vite-plugin-ts-nameof';
 
-// https://vite.dev/config/
-export default defineConfig({
-  plugins: [vue()],
-})
+export default defineConfig({ plugins: [tsNameof(), vue()] });
